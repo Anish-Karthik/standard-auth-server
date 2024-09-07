@@ -4,6 +4,8 @@ import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import home from './home';
 import environment from './lib/environment';
 import expressJSDocSwaggerConfig from './config/express-jsdoc-swagger.config';
@@ -18,6 +20,8 @@ class App {
   constructor() {
     this.express = express();
     this.setMiddlewares();
+    this.setAuthMiddlewares();
+    this.setRateLimit();
     this.disableSettings();
     this.setRoutes();
     this.setErrorHandler();
@@ -32,6 +36,20 @@ class App {
     this.express.use(express.urlencoded({ extended: true }));
     this.express.use(helmet());
     this.express.use(express.static('public'));
+  }
+
+  private setAuthMiddlewares(): void {
+    this.express.use(cookieParser());
+  }
+
+  private setRateLimit(): void {
+    // Rate limiting to prevent brute-force attacks
+    const apiLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // Limit each IP to 100 requests per window
+      message: 'Too many requests, please try again later.',
+    });
+    this.express.use(apiLimiter);
   }
 
   private disableSettings(): void {
