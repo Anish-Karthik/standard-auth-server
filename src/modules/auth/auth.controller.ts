@@ -103,9 +103,9 @@ export default class AuthController extends Api {
         );
       }
       // Send refresh token in an HttpOnly cookie for security
-      if (user.mfaEnabled) {
-        // Implement MFA here
-      }
+      // if (user.mfaEnabled) {
+      //   // Implement MFA here
+      // }
       // Create JWT token
       const accessToken = generateAccessToken({
         userId: user.id,
