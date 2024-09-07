@@ -10,3 +10,14 @@ export class CreateUserDto {
   @IsOptional()
   phone: string;
 }
+
+export class CreateManyUsersDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  phone: string;
+}

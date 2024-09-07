@@ -8,4 +8,16 @@ export default class UserService {
     const user = await prisma.user.create({ data });
     return user;
   }
+
+  public async createManyUsers(users: User[], verify: boolean) {
+    if (verify) {
+      // Verify users
+      users = users.map((user) => ({ ...user, verified: true }));
+    }
+    const createdUsers = await prisma.user.createMany({
+      data: users,
+      skipDuplicates: true,
+    });
+    return createdUsers;
+  }
 }

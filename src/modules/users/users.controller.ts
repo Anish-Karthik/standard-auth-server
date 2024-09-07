@@ -20,4 +20,20 @@ export default class UserController extends Api {
       next(e);
     }
   };
+
+  public createManyUsers = async (
+    req: Request,
+    res: CustomResponse<User>,
+    next: NextFunction
+  ) => {
+    try {
+      const users = await this.userService.createManyUsers(
+        req.body.users,
+        !!req.query.verify
+      );
+      this.send(res, users, HttpStatusCode.Created, 'createManyUsers');
+    } catch (e) {
+      next(e);
+    }
+  };
 }

@@ -16,7 +16,7 @@ export const verifyAuthToken = async (
       // Attach the user to the request object
       req.user = await prisma.user.findUnique({
         where: { id: decoded.userId },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, role: true },
       });
 
       if (!req.user) {
@@ -29,5 +29,17 @@ export const verifyAuthToken = async (
     }
   } else {
     return res.status(401).json({ message: 'Not authorized, no token' });
+  }
+};
+
+export const checkAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.user?.role === 'ADMIN') {
+    next();
+  } else {
+    return res.status(401).json({ message: 'Not authorized, not an admin' });
   }
 };
