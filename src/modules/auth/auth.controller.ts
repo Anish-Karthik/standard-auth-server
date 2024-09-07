@@ -93,6 +93,15 @@ export default class AuthController extends Api {
           'Invalid password'
         );
       }
+
+      if (!user.verified) {
+        return this.send(
+          res,
+          null,
+          HttpStatusCode.BadRequest,
+          'Email not verified'
+        );
+      }
       // Send refresh token in an HttpOnly cookie for security
       if (user.mfaEnabled) {
         // Implement MFA here
