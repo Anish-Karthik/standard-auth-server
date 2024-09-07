@@ -93,6 +93,10 @@ export default class AuthController extends Api {
           'Invalid password'
         );
       }
+      // Send refresh token in an HttpOnly cookie for security
+      if (user.mfaEnabled) {
+        // Implement MFA here
+      }
       // Create JWT token
       const accessToken = generateAccessToken({
         userId: user.id,
@@ -102,8 +106,6 @@ export default class AuthController extends Api {
         userId: user.id,
         email: user.email,
       });
-
-      // Send refresh token in an HttpOnly cookie for security
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
@@ -310,6 +312,18 @@ export default class AuthController extends Api {
       });
 
       return this.send(res, null, HttpStatusCode.Ok, 'Password reset');
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  public verifyMfa = async (
+    req: Request,
+    res: CustomResponse<User>,
+    next: NextFunction
+  ) => {
+    try {
+      // to be implemented
     } catch (e) {
       next(e);
     }
