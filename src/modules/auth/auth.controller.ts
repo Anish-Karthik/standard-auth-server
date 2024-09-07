@@ -8,12 +8,16 @@ import Api from '@/lib/api';
 import prisma from '@/lib/prisma';
 import {
   generateAccessToken,
+  generateEmailVerificationToken,
   generateRefreshToken,
+  generateResetPasswordToken,
 } from '@/utils/auth/generate-token';
 import {
   verifyAccessToken,
   verifyRefreshToken,
+  verifyResetPasswordToken,
 } from '@/utils/auth/verify-token';
+import { sendVerificationEmail } from '@/lib/email-service';
 
 export default class AuthController extends Api {
   private readonly userService = new UserService();
@@ -37,10 +41,28 @@ export default class AuthController extends Api {
       }
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 12);
-
+      let verified = false;
+      if (
+        process.env.ALLOW_AUTO_VERIFY === 'true' &&
+        req.query.autoverify === 'true'
+      ) {
+        verified = true;
+      }
       const user = await prisma.user.create({
-        data: { email, password: hashedPassword },
+        data: { email, password: hashedPassword, verified },
       });
+
+      if (!verified && process.env.AUTO_VERIFY_EMAIL === 'false') {
+        // Send verification email
+        await sendVerificationEmail(
+          user,
+          generateEmailVerificationToken({
+            userId: user.id,
+            email: user.email,
+          }),
+          req.query.redirect as string
+        );
+      }
 
       return this.send(res, user, HttpStatusCode.Created, 'User Registered');
     } catch (e) {
@@ -162,6 +184,132 @@ export default class AuthController extends Api {
       }
 
       return this.send(res, user, HttpStatusCode.Ok, 'User verified');
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  public verifyEmail = async (
+    req: Request,
+    res: CustomResponse<User>,
+    next: NextFunction
+  ) => {
+    try {
+      const { token } = req.query;
+      if (!token) {
+        return this.send(
+          res,
+          null,
+          HttpStatusCode.BadRequest,
+          'No verification token found'
+        );
+      }
+      const decoded = verifyAccessToken(token as string);
+      if (!decoded.userId) {
+        return this.send(
+          res,
+          null,
+          HttpStatusCode.BadRequest,
+          'Invalid verification token'
+        );
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+      });
+
+      if (!user) {
+        return this.send(res, null, HttpStatusCode.NotFound, 'User not found');
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { verified: true },
+      });
+
+      return this.send(res, user, HttpStatusCode.Ok, 'Email verified');
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  public forgotPassword = async (
+    req: Request,
+    res: CustomResponse<User>,
+    next: NextFunction
+  ) => {
+    try {
+      const { email } = req.body;
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        return this.send(res, null, HttpStatusCode.NotFound, 'User not found');
+      }
+
+      const resetToken = generateResetPasswordToken({
+        userId: user.id,
+        email: user.email,
+      });
+
+      // Send reset password email
+      await sendVerificationEmail(
+        user,
+        resetToken,
+        req.query.redirect as string
+      );
+
+      return this.send(
+        res,
+        null,
+        HttpStatusCode.Ok,
+        'Reset password email sent'
+      );
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  public resetPassword = async (
+    req: Request,
+    res: CustomResponse<User>,
+    next: NextFunction
+  ) => {
+    try {
+      const { token, password } = req.body;
+      if (!token) {
+        return this.send(
+          res,
+          null,
+          HttpStatusCode.BadRequest,
+          'No verification token found'
+        );
+      }
+      const decoded = verifyResetPasswordToken(token);
+      if (!decoded.userId) {
+        return this.send(
+          res,
+          null,
+          HttpStatusCode.BadRequest,
+          'Invalid verification token'
+        );
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+      });
+
+      if (!user) {
+        return this.send(res, null, HttpStatusCode.NotFound, 'User not found');
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+
+      return this.send(res, null, HttpStatusCode.Ok, 'Password reset');
     } catch (e) {
       next(e);
     }

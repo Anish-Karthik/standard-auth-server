@@ -11,12 +11,12 @@ datasource db {
 }
 
 model User {
-  id                    String      @id @default(cuid())
-  email                 String      @unique
-  password              String      // Store the hashed password
-  name                  String?
-  phone                 String?
-  verified              Boolean     @default(false) // For email verification
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String // Store the hashed password
+  name      String?
+  phone     String?
+  verified  Boolean  @default(false) // For email verification
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -69,6 +69,7 @@
     "jwks-rsa": "^3.0.1",
     "morgan": "^1.10.0",
     "nocache": "^4.0.0",
+    "nodemailer": "^6.9.15",
     "nodemon": "^3.0.1",
     "winston": "^3.10.0"
   },
@@ -88,6 +89,7 @@
     "@types/jwk-to-pem": "^2.0.1",
     "@types/morgan": "^1.9.4",
     "@types/node": "^20.4.8",
+    "@types/nodemailer": "^6.4.15",
     "@types/superagent": "4.1.18",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
