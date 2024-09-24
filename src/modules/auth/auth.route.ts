@@ -38,8 +38,10 @@ router.post('/refresh-token', csrfProtection, authController.refreshToken);
 router.post('/logout', authController.logout);
 router.post('/verify', authController.verify);
 
+router.post('/send-verification-email', authController.sendVerificationEmail);
 router.post('/verify-email', authController.verifyEmail);
-router.post('/forgot-password', authController.forgotPassword);
+
+router.post('/forgot-password', authController.sendForgotPasswordMail);
 router.post('/reset-password', authController.resetPassword);
 
 export default router;
